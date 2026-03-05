@@ -1,10 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readData, writeData } from "@/lib/data"
 import { isAdminAuthorized } from "@/lib/auth"
-import { writeFile, mkdir } from "fs/promises"
-import path from "path"
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads")
+const VALID_FIELDS = ["leadTimePdf", "shutdownPdf"] as const
+type PdfField = (typeof VALID_FIELDS)[number]
+
+const PDF_NAMES: Record<PdfField, string> = {
+  leadTimePdf: "lead-times.pdf",
+  shutdownPdf: "shutdown-schedule.pdf",
+}
+
+async function saveToBlob(file: File, field: PdfField): Promise<string> {
+  const { put } = await import("@vercel/blob")
+  const blob = await put(PDF_NAMES[field], file, { access: "public", addRandomSuffix: false })
+  return blob.url
+}
+
+async function saveToFs(file: File, field: PdfField): Promise<string> {
+  const { writeFile, mkdir } = await import("fs/promises")
+  const path = await import("path")
+  const uploadDir = path.join(process.cwd(), "public", "uploads")
+  await mkdir(uploadDir, { recursive: true })
+  const filePath = path.join(uploadDir, PDF_NAMES[field])
+  const buffer = Buffer.from(await file.arrayBuffer())
+  await writeFile(filePath, buffer)
+  return `/uploads/${PDF_NAMES[field]}`
+}
 
 export async function POST(req: NextRequest) {
   if (!isAdminAuthorized(req)) {
@@ -19,34 +40,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 })
   }
 
-  if (!fieldName || !["leadTimePdf", "shutdownPdf"].includes(fieldName)) {
+  if (!fieldName || !(VALID_FIELDS as readonly string[]).includes(fieldName)) {
     return NextResponse.json({ error: "Field must be leadTimePdf or shutdownPdf" }, { status: 400 })
   }
 
-  if (!file.name.endsWith(".pdf")) {
+  if (!file.name.toLowerCase().endsWith(".pdf")) {
     return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 })
   }
 
-  const MAX_SIZE = 10 * 1024 * 1024 // 10MB
+  const MAX_SIZE = 10 * 1024 * 1024
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: "File exceeds 10MB limit" }, { status: 400 })
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true })
+  const field = fieldName as PdfField
+  const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 
-  const safeName = fieldName === "leadTimePdf" ? "lead-times.pdf" : "shutdown-schedule.pdf"
-  const filePath = path.join(UPLOAD_DIR, safeName)
-  const buffer = Buffer.from(await file.arrayBuffer())
-  await writeFile(filePath, buffer)
+  const url = useBlob ? await saveToBlob(file, field) : await saveToFs(file, field)
 
-  const data = readData()
-  data.assets[fieldName as "leadTimePdf" | "shutdownPdf"] = `/uploads/${safeName}`
-  writeData(data)
+  const data = await readData()
+  data.assets[field] = url
+  await writeData(data)
 
-  return NextResponse.json({ success: true, url: `/uploads/${safeName}` })
+  return NextResponse.json({ success: true, url })
 }
 
 export async function GET() {
-  const data = readData()
+  const data = await readData()
   return NextResponse.json(data.assets)
 }

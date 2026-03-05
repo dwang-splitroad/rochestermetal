@@ -1,29 +1,17 @@
-import fs from "fs"
-import path from "path"
+/**
+ * Data access layer.
+ * - In development (no KV_REST_API_URL): reads/writes a local JSON file at data/site-data.json
+ * - In production on Vercel (KV_REST_API_URL present): uses @vercel/kv
+ */
 
-const DATA_FILE = path.join(process.cwd(), "data", "site-data.json")
+import type { SiteData, SurchargeEntry, AnnouncementData } from "./data-types"
 
-export interface SurchargeEntry {
-  date: string // YYYY-MM format
-  ductile: number
-  gray: number
-}
+export type { SiteData, SurchargeEntry, AnnouncementData }
 
-export interface AnnouncementData {
-  enabled: boolean
-  text: string
-  link: string
-  type: "info" | "warning" | "success"
-}
+// Re-export types that pages import directly
+export { formatSurchargeDate } from "./data-types"
 
-export interface SiteData {
-  announcement: AnnouncementData
-  surcharges: SurchargeEntry[]
-  assets: {
-    leadTimePdf: string | null
-    shutdownPdf: string | null
-  }
-}
+const KV_KEY = "site-data"
 
 const defaultData: SiteData = {
   announcement: {
@@ -34,7 +22,7 @@ const defaultData: SiteData = {
   },
   surcharges: [
     {
-      date: new Date().toISOString().slice(0, 7),
+      date: "2026-03",
       ductile: 0.4627,
       gray: 0.3904,
     },
@@ -45,48 +33,71 @@ const defaultData: SiteData = {
   },
 }
 
-export function readData(): SiteData {
+// ─── KV (Vercel production) ──────────────────────────────────────────────────
+
+async function kvRead(): Promise<SiteData> {
+  const { kv } = await import("@vercel/kv")
+  const stored = await kv.get<SiteData>(KV_KEY)
+  return stored ? { ...defaultData, ...stored } : defaultData
+}
+
+async function kvWrite(data: SiteData): Promise<void> {
+  const { kv } = await import("@vercel/kv")
+  await kv.set(KV_KEY, data)
+}
+
+// ─── Filesystem (local development) ─────────────────────────────────────────
+
+async function fsRead(): Promise<SiteData> {
+  const fs = await import("fs")
+  const path = await import("path")
+  const filePath = path.join(process.cwd(), "data", "site-data.json")
   try {
-    if (!fs.existsSync(DATA_FILE)) {
-      const dir = path.dirname(DATA_FILE)
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true })
-      }
-      fs.writeFileSync(DATA_FILE, JSON.stringify(defaultData, null, 2))
+    if (!fs.existsSync(filePath)) {
+      const dir = path.dirname(filePath)
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2))
       return defaultData
     }
-    const raw = fs.readFileSync(DATA_FILE, "utf-8")
+    const raw = fs.readFileSync(filePath, "utf-8")
     return { ...defaultData, ...JSON.parse(raw) } as SiteData
   } catch {
     return defaultData
   }
 }
 
-export function writeData(data: SiteData): void {
-  const dir = path.dirname(DATA_FILE)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2))
+async function fsWrite(data: SiteData): Promise<void> {
+  const fs = await import("fs")
+  const path = await import("path")
+  const filePath = path.join(process.cwd(), "data", "site-data.json")
+  const dir = path.dirname(filePath)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
 }
 
-export function getCurrentSurcharge(): SurchargeEntry | null {
-  const data = readData()
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+function useKv(): boolean {
+  return !!process.env.KV_REST_API_URL
+}
+
+export async function readData(): Promise<SiteData> {
+  return useKv() ? kvRead() : fsRead()
+}
+
+export async function writeData(data: SiteData): Promise<void> {
+  return useKv() ? kvWrite(data) : fsWrite(data)
+}
+
+export async function getCurrentSurcharge(): Promise<SurchargeEntry | null> {
+  const data = await readData()
   if (!data.surcharges.length) return null
-  // Sort by date descending and return the most recent
   const sorted = [...data.surcharges].sort((a, b) => b.date.localeCompare(a.date))
   return sorted[0]
 }
 
-export function getHistoricalSurcharges(months = 6): SurchargeEntry[] {
-  const data = readData()
+export async function getHistoricalSurcharges(months = 6): Promise<SurchargeEntry[]> {
+  const data = await readData()
   const sorted = [...data.surcharges].sort((a, b) => b.date.localeCompare(a.date))
-  // Skip the current (first) entry, return the next N
   return sorted.slice(1, months + 1)
-}
-
-export function formatSurchargeDate(dateStr: string): string {
-  const [year, month] = dateStr.split("-")
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1)
-  return date.toLocaleString("en-US", { month: "long", year: "numeric" })
 }

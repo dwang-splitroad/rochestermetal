@@ -3,7 +3,7 @@ import { readData, writeData } from "@/lib/data"
 import { isAdminAuthorized } from "@/lib/auth"
 
 export async function GET() {
-  const data = readData()
+  const data = await readData()
   return NextResponse.json(data.announcement)
 }
 
@@ -17,10 +17,13 @@ export async function PUT(req: NextRequest) {
 
   const validTypes = ["info", "warning", "success"]
   if (type && !validTypes.includes(type)) {
-    return NextResponse.json({ error: "Invalid type. Must be: info, warning, or success" }, { status: 400 })
+    return NextResponse.json(
+      { error: "Invalid type. Must be: info, warning, or success" },
+      { status: 400 }
+    )
   }
 
-  const data = readData()
+  const data = await readData()
   data.announcement = {
     enabled: enabled ?? data.announcement.enabled,
     text: text ?? data.announcement.text,
@@ -28,6 +31,6 @@ export async function PUT(req: NextRequest) {
     type: type ?? data.announcement.type,
   }
 
-  writeData(data)
+  await writeData(data)
   return NextResponse.json({ success: true, announcement: data.announcement })
 }

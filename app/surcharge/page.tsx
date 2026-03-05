@@ -6,46 +6,55 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Iron Surcharge | Rochester Metal Products",
-  description: "Current and historical iron surcharge rates for gray and ductile iron castings at Rochester Metal Products.",
+  description:
+    "Current and historical iron surcharge rates for gray and ductile iron castings at Rochester Metal Products.",
 }
 
-// Revalidate every hour so rate updates show promptly
 export const revalidate = 3600
 
-export default function SurchargePage() {
-  const current = getCurrentSurcharge()
-  const historical = getHistoricalSurcharges(6)
+export default async function SurchargePage() {
+  const [current, historical] = await Promise.all([
+    getCurrentSurcharge(),
+    getHistoricalSurcharges(6),
+  ])
 
   return (
     <main className="min-h-screen bg-background">
       <Header />
 
       <section className="mx-auto max-w-4xl px-4 py-16">
-
         {/* Page heading */}
         <div className="mb-10">
           <div className="flex items-center gap-2 text-primary text-sm font-semibold tracking-widest uppercase mb-2">
             <div className="w-1 h-5 bg-primary rounded-full" />
             RMP
           </div>
-          <h1 className="text-4xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+          <h1
+            className="text-4xl font-bold text-foreground"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Iron Surcharge
           </h1>
           <p className="mt-3 text-muted-foreground max-w-xl">
-            Surcharge rates are applied per pound of raw casting and are updated monthly based on market conditions.
+            Surcharge rates are applied per pound of raw casting and are updated monthly based on
+            market conditions.
           </p>
         </div>
 
         {/* Current surcharge */}
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
+          <h2
+            className="text-2xl font-semibold text-foreground mb-1"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Current Surcharge
           </h2>
-          <p className="text-sm text-muted-foreground mb-5">Surcharge rate per pound of raw casting:</p>
+          <p className="text-sm text-muted-foreground mb-5">
+            Surcharge rate per pound of raw casting:
+          </p>
 
           {current ? (
             <div className="grid sm:grid-cols-2 gap-4">
-              {/* Ductile */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
@@ -57,7 +66,6 @@ export default function SurchargePage() {
                 <div className="text-xs text-muted-foreground mt-1">per pound</div>
               </div>
 
-              {/* Gray */}
               <div className="rounded-xl border border-border bg-card p-6">
                 <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
                   <TrendingUp className="h-4 w-4 text-primary" />
@@ -85,10 +93,15 @@ export default function SurchargePage() {
 
         {/* Historical data */}
         <div>
-          <h2 className="text-2xl font-semibold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
+          <h2
+            className="text-2xl font-semibold text-foreground mb-1"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Prior Data
           </h2>
-          <p className="text-sm text-muted-foreground mb-5">Surcharge rate per pound of raw casting:</p>
+          <p className="text-sm text-muted-foreground mb-5">
+            Surcharge rate per pound of raw casting:
+          </p>
 
           {historical.length > 0 ? (
             <div className="rounded-xl border border-border overflow-hidden">
@@ -106,9 +119,15 @@ export default function SurchargePage() {
                       key={entry.date}
                       className={`border-b border-border last:border-0 ${i % 2 === 0 ? "bg-background" : "bg-muted/20"}`}
                     >
-                      <td className="px-5 py-3 text-muted-foreground">{formatSurchargeDate(entry.date)}</td>
-                      <td className="px-5 py-3 text-right font-mono text-foreground">${entry.ductile.toFixed(4)}</td>
-                      <td className="px-5 py-3 text-right font-mono text-foreground">${entry.gray.toFixed(4)}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {formatSurchargeDate(entry.date)}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-foreground">
+                        ${entry.ductile.toFixed(4)}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono text-foreground">
+                        ${entry.gray.toFixed(4)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -120,7 +139,6 @@ export default function SurchargePage() {
             </div>
           )}
         </div>
-
       </section>
 
       <Footer />
