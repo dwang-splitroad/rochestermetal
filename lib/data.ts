@@ -1,52 +1,58 @@
 /**
- * Data access layer.
- * - In development (no KV_REST_API_URL): reads/writes a local JSON file at data/site-data.json
- * - In production on Vercel (KV_REST_API_URL present): uses @vercel/kv
+ * Data access layer — storage backend priority:
+ *   1. Neon PostgreSQL  (DATABASE_URL is set)       → production on Vercel
+ *   2. Filesystem JSON  (fallback)                  → local development
  */
 
-import type { SiteData, SurchargeEntry, AnnouncementData } from "./data-types"
-
-export type { SiteData, SurchargeEntry, AnnouncementData }
-
-// Re-export types that pages import directly
+export type { SiteData, SurchargeEntry, AnnouncementData } from "./data-types"
 export { formatSurchargeDate } from "./data-types"
 
-const KV_KEY = "site-data"
+import type { SiteData } from "./data-types"
+import type { SurchargeEntry } from "./data-types"
 
 const defaultData: SiteData = {
-  announcement: {
-    enabled: false,
-    text: "",
-    link: "",
-    type: "info",
-  },
-  surcharges: [
-    {
-      date: "2026-03",
-      ductile: 0.4627,
-      gray: 0.3904,
-    },
-  ],
-  assets: {
-    leadTimePdf: null,
-    shutdownPdf: null,
-  },
+  announcement: { enabled: false, text: "", link: "", type: "info" },
+  surcharges: [{ date: "2026-03", ductile: 0.4627, gray: 0.3904 }],
+  assets: { leadTimePdf: null, shutdownPdf: null },
 }
 
-// ─── KV (Vercel production) ──────────────────────────────────────────────────
+// ─── Neon PostgreSQL ──────────────────────────────────────────────────────────
 
-async function kvRead(): Promise<SiteData> {
-  const { kv } = await import("@vercel/kv")
-  const stored = await kv.get<SiteData>(KV_KEY)
-  return stored ? { ...defaultData, ...stored } : defaultData
+async function ensureTable(): Promise<void> {
+  const { neon } = await import("@neondatabase/serverless")
+  const sql = neon(process.env.DATABASE_URL!)
+  await sql`
+    CREATE TABLE IF NOT EXISTS site_data (
+      id      INTEGER PRIMARY KEY DEFAULT 1,
+      data    JSONB   NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT now()
+    )
+  `
 }
 
-async function kvWrite(data: SiteData): Promise<void> {
-  const { kv } = await import("@vercel/kv")
-  await kv.set(KV_KEY, data)
+async function neonRead(): Promise<SiteData> {
+  const { neon } = await import("@neondatabase/serverless")
+  const sql = neon(process.env.DATABASE_URL!)
+  await ensureTable()
+  const rows = await sql`SELECT data FROM site_data WHERE id = 1`
+  if (!rows.length) return defaultData
+  return { ...defaultData, ...(rows[0].data as SiteData) }
 }
 
-// ─── Filesystem (local development) ─────────────────────────────────────────
+async function neonWrite(data: SiteData): Promise<void> {
+  const { neon } = await import("@neondatabase/serverless")
+  const sql = neon(process.env.DATABASE_URL!)
+  await ensureTable()
+  await sql`
+    INSERT INTO site_data (id, data, updated_at)
+    VALUES (1, ${JSON.stringify(data)}::jsonb, now())
+    ON CONFLICT (id) DO UPDATE
+      SET data       = EXCLUDED.data,
+          updated_at = now()
+  `
+}
+
+// ─── Filesystem (local development) ──────────────────────────────────────────
 
 async function fsRead(): Promise<SiteData> {
   const fs = await import("fs")
@@ -77,23 +83,22 @@ async function fsWrite(data: SiteData): Promise<void> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-function useKv(): boolean {
-  return !!process.env.KV_REST_API_URL
+function useNeon(): boolean {
+  return !!process.env.DATABASE_URL
 }
 
 export async function readData(): Promise<SiteData> {
-  return useKv() ? kvRead() : fsRead()
+  return useNeon() ? neonRead() : fsRead()
 }
 
 export async function writeData(data: SiteData): Promise<void> {
-  return useKv() ? kvWrite(data) : fsWrite(data)
+  return useNeon() ? neonWrite(data) : fsWrite(data)
 }
 
 export async function getCurrentSurcharge(): Promise<SurchargeEntry | null> {
   const data = await readData()
   if (!data.surcharges.length) return null
-  const sorted = [...data.surcharges].sort((a, b) => b.date.localeCompare(a.date))
-  return sorted[0]
+  return [...data.surcharges].sort((a, b) => b.date.localeCompare(a.date))[0]
 }
 
 export async function getHistoricalSurcharges(months = 6): Promise<SurchargeEntry[]> {
