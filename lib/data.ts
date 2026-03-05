@@ -18,21 +18,24 @@ const defaultData: SiteData = {
 
 // ─── Neon PostgreSQL ──────────────────────────────────────────────────────────
 
-async function ensureTable(): Promise<void> {
+async function getSql() {
   const { neon } = await import("@neondatabase/serverless")
-  const sql = neon(process.env.DATABASE_URL!)
+  return neon(getNeonUrl()!)
+}
+
+async function ensureTable(): Promise<void> {
+  const sql = await getSql()
   await sql`
     CREATE TABLE IF NOT EXISTS site_data (
-      id      INTEGER PRIMARY KEY DEFAULT 1,
-      data    JSONB   NOT NULL,
+      id         INTEGER PRIMARY KEY DEFAULT 1,
+      data       JSONB   NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT now()
     )
   `
 }
 
 async function neonRead(): Promise<SiteData> {
-  const { neon } = await import("@neondatabase/serverless")
-  const sql = neon(process.env.DATABASE_URL!)
+  const sql = await getSql()
   await ensureTable()
   const rows = await sql`SELECT data FROM site_data WHERE id = 1`
   if (!rows.length) return defaultData
@@ -40,8 +43,7 @@ async function neonRead(): Promise<SiteData> {
 }
 
 async function neonWrite(data: SiteData): Promise<void> {
-  const { neon } = await import("@neondatabase/serverless")
-  const sql = neon(process.env.DATABASE_URL!)
+  const sql = await getSql()
   await ensureTable()
   await sql`
     INSERT INTO site_data (id, data, updated_at)
@@ -83,8 +85,17 @@ async function fsWrite(data: SiteData): Promise<void> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+// Neon integration can create DATABASE_URL or POSTGRES_URL depending on version
+function getNeonUrl(): string | undefined {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL
+  )
+}
+
 function useNeon(): boolean {
-  return !!process.env.DATABASE_URL
+  return !!getNeonUrl()
 }
 
 export async function readData(): Promise<SiteData> {

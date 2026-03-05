@@ -56,6 +56,13 @@ export async function POST(req: NextRequest) {
   const field = fieldName as PdfField
   const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN
 
+  if (!useBlob && process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "PDF uploads require Vercel Blob to be configured. Add BLOB_READ_WRITE_TOKEN to your environment variables." },
+      { status: 503 }
+    )
+  }
+
   const url = useBlob ? await saveToBlob(file, field) : await saveToFs(file, field)
 
   const data = await readData()
