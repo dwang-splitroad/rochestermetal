@@ -89,65 +89,66 @@ export function Header() {
 
       {/* Info bar */}
       <div className="bg-card border-b border-border px-4 py-2">
-        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
 
-          {/* Phone */}
-          <a href="tel:574-223-3164" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          {/* Phone — always visible */}
+          <a href="tel:574-223-3164" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
             <Phone className="h-3.5 w-3.5" />
-            <span className="font-medium">CALL: (574) 223-3164</span>
+            <span className="font-medium hidden xs:inline">CALL:&nbsp;</span>
+            <span className="font-medium">(574) 223-3164</span>
           </a>
 
-          {/* Info links */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-semibold tracking-wide text-muted-foreground">
+          {/* Info links — scrollable on mobile */}
+          <div className="flex items-center gap-x-4 gap-y-1 text-xs font-semibold tracking-wide text-muted-foreground overflow-x-auto scrollbar-hide">
 
             {/* Iron Surcharge */}
-            <Link href="/surcharge" className="flex items-center gap-1.5 hover:text-primary transition-colors group">
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              <span>
+            <Link href="/surcharge" className="flex items-center gap-1.5 hover:text-primary transition-colors shrink-0">
+              <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="whitespace-nowrap">
                 IRON SURCHARGE
                 {surcharge && (
-                  <span className="text-foreground/70 font-normal ml-1">
-                    : Ductile: ${surcharge.ductile.toFixed(4)}&nbsp;&nbsp;Gray: ${surcharge.gray.toFixed(4)}
+                  <span className="text-foreground/70 font-normal ml-1 hidden md:inline">
+                    : Ductile: ${surcharge.ductile.toFixed(4)}&nbsp; Gray: ${surcharge.gray.toFixed(4)}
                   </span>
                 )}
               </span>
             </Link>
 
-            <span className="text-muted-foreground/40 hidden sm:inline">|</span>
+            <span className="text-muted-foreground/40 shrink-0">|</span>
 
             {/* Lead Times */}
             {assets.leadTimePdf ? (
-              <a href={assets.leadTimePdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
-                <Clock className="h-3.5 w-3.5 text-primary" />
+              <a href={assets.leadTimePdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors shrink-0 whitespace-nowrap">
+                <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
                 LEAD TIMES
               </a>
             ) : (
-              <span className="flex items-center gap-1.5 opacity-50 cursor-default">
-                <Clock className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 opacity-40 cursor-default shrink-0 whitespace-nowrap">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
                 LEAD TIMES
               </span>
             )}
 
-            <span className="text-muted-foreground/40 hidden sm:inline">|</span>
+            <span className="text-muted-foreground/40 shrink-0">|</span>
 
             {/* Shut Down */}
             {assets.shutdownPdf ? (
-              <a href={assets.shutdownPdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
-                <Calendar className="h-3.5 w-3.5 text-primary" />
+              <a href={assets.shutdownPdf} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors shrink-0 whitespace-nowrap">
+                <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
                 SHUT DOWN
               </a>
             ) : (
-              <span className="flex items-center gap-1.5 opacity-50 cursor-default">
-                <Calendar className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 opacity-40 cursor-default shrink-0 whitespace-nowrap">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
                 SHUT DOWN
               </span>
             )}
 
-            <span className="text-muted-foreground/40 hidden sm:inline">|</span>
+            <span className="text-muted-foreground/40 shrink-0">|</span>
 
             {/* Board of Directors */}
-            <Link href="/board-of-directors" className="flex items-center gap-1.5 hover:text-primary transition-colors">
-              <Users className="h-3.5 w-3.5 text-primary" />
+            <Link href="/board-of-directors" className="flex items-center gap-1.5 hover:text-primary transition-colors shrink-0 whitespace-nowrap">
+              <Users className="h-3.5 w-3.5 text-primary shrink-0" />
               BOARD OF DIRECTORS
             </Link>
           </div>

@@ -18,10 +18,9 @@ import {
   EyeOff,
   Save,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SurchargeEntry {
   date: string
@@ -40,8 +39,6 @@ interface AssetsData {
   leadTimePdf: string | null
   shutdownPdf: string | null
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string) {
   const [year, month] = dateStr.split("-")
@@ -142,7 +139,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
   )
 }
 
-// ─── Toast ─────────────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────────────────────
 
 function Toast({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) {
   useEffect(() => {
@@ -151,9 +148,9 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
   }, [onClose])
 
   return (
-    <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-      {type === "success" ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-      {message}
+    <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+      {type === "success" ? <CheckCircle className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
+      <span>{message}</span>
     </div>
   )
 }
@@ -164,14 +161,12 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
   const [activeTab, setActiveTab] = useState<"surcharges" | "announcement" | "assets">("surcharges")
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
-  // Surcharges state
   const [surcharges, setSurcharges] = useState<SurchargeEntry[]>([])
   const [newDate, setNewDate] = useState("")
   const [newDuctile, setNewDuctile] = useState("")
   const [newGray, setNewGray] = useState("")
   const [surchargeLoading, setSurchargeLoading] = useState(false)
 
-  // Announcement state
   const [announcement, setAnnouncement] = useState<AnnouncementData>({
     enabled: false,
     text: "",
@@ -180,7 +175,6 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
   })
   const [announcementLoading, setAnnouncementLoading] = useState(false)
 
-  // Assets state
   const [assets, setAssets] = useState<AssetsData>({ leadTimePdf: null, shutdownPdf: null })
   const leadTimeRef = useRef<HTMLInputElement>(null)
   const shutdownRef = useRef<HTMLInputElement>(null)
@@ -191,7 +185,6 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
     setToast({ message, type })
   }
 
-  // Load all data
   useEffect(() => {
     fetchSurcharges()
     fetchAnnouncement()
@@ -313,51 +306,52 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
   }
 
   const tabs = [
-    { id: "surcharges" as const, label: "Iron Surcharge", icon: TrendingUp },
+    { id: "surcharges" as const, label: "Surcharge", icon: TrendingUp },
     { id: "announcement" as const, label: "Announcement", icon: Megaphone },
-    { id: "assets" as const, label: "PDF Assets", icon: FileText },
+    { id: "assets" as const, label: "PDFs", icon: FileText },
   ]
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
-      <div className="border-b border-border bg-card px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+      <div className="border-b border-border bg-card px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight text-foreground shrink-0" style={{ fontFamily: "var(--font-display)" }}>
             R<span className="text-primary">M</span>P
           </Link>
-          <span className="text-muted-foreground text-sm font-medium">/ Admin</span>
+          <span className="text-muted-foreground text-sm font-medium hidden xs:inline">/ Admin</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            ← View site
+        <div className="flex items-center gap-2">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">View site</span>
           </Link>
-          <Button variant="outline" size="sm" onClick={onLogout} className="flex items-center gap-2">
-            <LogOut className="h-4 w-4" />
-            Sign out
+          <Button variant="outline" size="sm" onClick={onLogout} className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Sign out</span>
           </Button>
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-1" style={{ fontFamily: "var(--font-display)" }}>
           Website Admin
         </h1>
-        <p className="text-sm text-muted-foreground mb-8">Manage surcharges, announcements, and document uploads.</p>
+        <p className="text-sm text-muted-foreground mb-6 sm:mb-8">Manage surcharges, announcements, and document uploads.</p>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-border mb-8">
+        <div className="flex border-b border-border mb-6 sm:mb-8 overflow-x-auto">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === id
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {label}
             </button>
           ))}
@@ -365,100 +359,128 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
 
         {/* ── Surcharges Tab ──────────────────────────────── */}
         {activeTab === "surcharges" && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Add entry */}
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
               <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Plus className="h-4 w-4 text-primary" />
                 Add / Update Entry
               </h2>
-              <form onSubmit={handleAddSurcharge} className="grid sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Month (YYYY-MM)</label>
-                  <input
-                    type="month"
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+              <form onSubmit={handleAddSurcharge} className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">Month</label>
+                    <input
+                      type="month"
+                      value={newDate}
+                      onChange={(e) => setNewDate(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">Ductile ($)</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      value={newDuctile}
+                      onChange={(e) => setNewDuctile(e.target.value)}
+                      placeholder="0.0000"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">Gray ($)</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      value={newGray}
+                      onChange={(e) => setNewGray(e.target.value)}
+                      placeholder="0.0000"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Ductile Rate ($)</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={newDuctile}
-                    onChange={(e) => setNewDuctile(e.target.value)}
-                    placeholder="0.0000"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Gray Rate ($)</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={newGray}
-                    onChange={(e) => setNewGray(e.target.value)}
-                    placeholder="0.0000"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button type="submit" disabled={surchargeLoading} className="w-full">
-                    {surchargeLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1.5" /> Save</>}
-                  </Button>
-                </div>
+                <Button type="submit" disabled={surchargeLoading} className="w-full sm:w-auto">
+                  {surchargeLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-1.5" /> : <Save className="h-4 w-4 mr-1.5" />}
+                  Save Entry
+                </Button>
               </form>
               <p className="text-xs text-muted-foreground mt-3">
-                If an entry for that month already exists, it will be updated. The most recent month is shown as the current surcharge on the website.
+                The most recent month is shown as the current surcharge on the website.
               </p>
             </div>
 
             {/* Existing entries */}
             <div className="rounded-xl border border-border overflow-hidden">
-              <div className="px-5 py-3 bg-muted/50 border-b border-border">
+              <div className="px-4 sm:px-5 py-3 bg-muted/50 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">All Entries</h2>
               </div>
               {surcharges.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground text-sm">No entries yet.</div>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/20">
-                      <th className="text-left px-5 py-3 font-medium text-muted-foreground">Period</th>
-                      <th className="text-right px-5 py-3 font-medium text-muted-foreground">Ductile</th>
-                      <th className="text-right px-5 py-3 font-medium text-muted-foreground">Gray</th>
-                      <th className="text-right px-5 py-3 font-medium text-muted-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  {/* Mobile: card layout */}
+                  <div className="sm:hidden divide-y divide-border">
                     {surcharges.map((entry, i) => (
-                      <tr key={entry.date} className={`border-b border-border last:border-0 ${i === 0 ? "bg-primary/5" : ""}`}>
-                        <td className="px-5 py-3 font-medium text-foreground">
-                          {formatDate(entry.date)}
-                          {i === 0 && <span className="ml-2 text-xs text-primary font-semibold">CURRENT</span>}
-                        </td>
-                        <td className="px-5 py-3 text-right font-mono text-foreground">${entry.ductile.toFixed(4)}</td>
-                        <td className="px-5 py-3 text-right font-mono text-foreground">${entry.gray.toFixed(4)}</td>
-                        <td className="px-5 py-3 text-right">
+                      <div key={entry.date} className={`px-4 py-3 ${i === 0 ? "bg-primary/5" : ""}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-foreground">
+                            {formatDate(entry.date)}
+                            {i === 0 && <span className="ml-2 text-xs text-primary font-semibold">CURRENT</span>}
+                          </span>
                           <button
                             onClick={() => handleDeleteSurcharge(entry.date)}
-                            className="text-muted-foreground hover:text-red-500 transition-colors"
-                            title="Delete entry"
+                            className="text-muted-foreground hover:text-red-500 transition-colors p-1"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                        </td>
-                      </tr>
+                        </div>
+                        <div className="flex gap-4 text-sm font-mono text-muted-foreground">
+                          <span>Ductile: <span className="text-foreground">${entry.ductile.toFixed(4)}</span></span>
+                          <span>Gray: <span className="text-foreground">${entry.gray.toFixed(4)}</span></span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                  {/* Desktop: table layout */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/20">
+                          <th className="text-left px-5 py-3 font-medium text-muted-foreground">Period</th>
+                          <th className="text-right px-5 py-3 font-medium text-muted-foreground">Ductile</th>
+                          <th className="text-right px-5 py-3 font-medium text-muted-foreground">Gray</th>
+                          <th className="text-right px-5 py-3 font-medium text-muted-foreground">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {surcharges.map((entry, i) => (
+                          <tr key={entry.date} className={`border-b border-border last:border-0 ${i === 0 ? "bg-primary/5" : ""}`}>
+                            <td className="px-5 py-3 font-medium text-foreground">
+                              {formatDate(entry.date)}
+                              {i === 0 && <span className="ml-2 text-xs text-primary font-semibold">CURRENT</span>}
+                            </td>
+                            <td className="px-5 py-3 text-right font-mono text-foreground">${entry.ductile.toFixed(4)}</td>
+                            <td className="px-5 py-3 text-right font-mono text-foreground">${entry.gray.toFixed(4)}</td>
+                            <td className="px-5 py-3 text-right">
+                              <button
+                                onClick={() => handleDeleteSurcharge(entry.date)}
+                                className="text-muted-foreground hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           </div>
@@ -466,7 +488,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
 
         {/* ── Announcement Tab ────────────────────────────── */}
         {activeTab === "announcement" && (
-          <div className="rounded-xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
             <h2 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
               <Megaphone className="h-4 w-4 text-primary" />
               Announcement Bar
@@ -474,7 +496,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
 
             <form onSubmit={handleSaveAnnouncement} className="space-y-5">
               {/* Enable toggle */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <div className="text-sm font-medium text-foreground">Show announcement bar</div>
                   <div className="text-xs text-muted-foreground">Display the announcement strip at the top of every page</div>
@@ -482,7 +504,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
                 <button
                   type="button"
                   onClick={() => setAnnouncement((a) => ({ ...a, enabled: !a.enabled }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${announcement.enabled ? "bg-primary" : "bg-muted"}`}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${announcement.enabled ? "bg-primary" : "bg-muted"}`}
                 >
                   <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${announcement.enabled ? "translate-x-6" : "translate-x-1"}`} />
                 </button>
@@ -491,7 +513,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
               {/* Type */}
               <div>
                 <label className="text-sm font-medium text-foreground block mb-2">Type</label>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {(["info", "warning", "success"] as const).map((t) => {
                     const icons = { info: Info, warning: AlertCircle, success: CheckCircle }
                     const colors = { info: "text-blue-600", warning: "text-amber-500", success: "text-green-600" }
@@ -539,20 +561,19 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
 
               {/* Preview */}
               {announcement.text && (
-                <div className={`rounded-lg px-4 py-3 text-sm font-medium flex items-center gap-2 ${
+                <div className={`rounded-lg px-4 py-3 text-sm font-medium flex items-start gap-2 ${
                   announcement.type === "info" ? "bg-blue-600 text-white" :
                   announcement.type === "warning" ? "bg-amber-500 text-white" :
                   "bg-green-600 text-white"
                 }`}>
-                  {announcement.type === "info" && <Info className="h-4 w-4" />}
-                  {announcement.type === "warning" && <AlertCircle className="h-4 w-4" />}
-                  {announcement.type === "success" && <CheckCircle className="h-4 w-4" />}
-                  <span>Preview: {announcement.text}</span>
-                  {announcement.link && <span className="underline ml-1">Learn more →</span>}
+                  {announcement.type === "info" && <Info className="h-4 w-4 shrink-0 mt-0.5" />}
+                  {announcement.type === "warning" && <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />}
+                  {announcement.type === "success" && <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" />}
+                  <span>{announcement.text}{announcement.link && <span className="underline ml-1">Learn more →</span>}</span>
                 </div>
               )}
 
-              <Button type="submit" disabled={announcementLoading}>
+              <Button type="submit" disabled={announcementLoading} className="w-full sm:w-auto">
                 {announcementLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                 Save Announcement
               </Button>
@@ -563,91 +584,65 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
         {/* ── Assets Tab ──────────────────────────────────── */}
         {activeTab === "assets" && (
           <div className="space-y-5">
-            {/* Lead Times */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                Lead Times PDF
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload the current lead times schedule. This will be linked from the info bar as &ldquo;LEAD TIMES&rdquo;.
-              </p>
-              {assets.leadTimePdf && (
-                <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-foreground flex-1 truncate">{assets.leadTimePdf}</span>
-                  <a href={assets.leadTimePdf} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline shrink-0">
-                    View
-                  </a>
-                </div>
-              )}
-              <input
-                ref={leadTimeRef}
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleUpload("leadTimePdf", file)
-                }}
-              />
-              <Button
-                variant="outline"
-                onClick={() => leadTimeRef.current?.click()}
-                disabled={uploadingLead}
-                className="flex items-center gap-2"
-              >
-                {uploadingLead ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {assets.leadTimePdf ? "Replace PDF" : "Upload PDF"}
-              </Button>
-            </div>
-
-            {/* Shutdown Schedule */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                Shutdown Schedule PDF
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Upload the plant shutdown / holiday schedule. This will be linked from the info bar as &ldquo;SHUT DOWN&rdquo;.
-              </p>
-              {assets.shutdownPdf && (
-                <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border">
-                  <FileText className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm text-foreground flex-1 truncate">{assets.shutdownPdf}</span>
-                  <a href={assets.shutdownPdf} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline shrink-0">
-                    View
-                  </a>
-                </div>
-              )}
-              <input
-                ref={shutdownRef}
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleUpload("shutdownPdf", file)
-                }}
-              />
-              <Button
-                variant="outline"
-                onClick={() => shutdownRef.current?.click()}
-                disabled={uploadingShutdown}
-                className="flex items-center gap-2"
-              >
-                {uploadingShutdown ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {assets.shutdownPdf ? "Replace PDF" : "Upload PDF"}
-              </Button>
-            </div>
+            {[
+              {
+                field: "leadTimePdf" as const,
+                label: "Lead Times PDF",
+                desc: 'Upload the current lead times schedule. Linked from the info bar as "LEAD TIMES".',
+                ref: leadTimeRef,
+                uploading: uploadingLead,
+                current: assets.leadTimePdf,
+              },
+              {
+                field: "shutdownPdf" as const,
+                label: "Shutdown Schedule PDF",
+                desc: 'Upload the plant shutdown / holiday schedule. Linked from the info bar as "SHUT DOWN".',
+                ref: shutdownRef,
+                uploading: uploadingShutdown,
+                current: assets.shutdownPdf,
+              },
+            ].map(({ field, label, desc, ref, uploading, current }) => (
+              <div key={field} className="rounded-xl border border-border bg-card p-4 sm:p-6">
+                <h2 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  {label}
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">{desc}</p>
+                {current && (
+                  <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-muted/30 border border-border">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm text-foreground flex-1 truncate min-w-0">{current}</span>
+                    <a href={current} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline shrink-0">
+                      View
+                    </a>
+                  </div>
+                )}
+                <input
+                  ref={ref}
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleUpload(field, file)
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => ref.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  {uploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {current ? "Replace PDF" : "Upload PDF"}
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }
@@ -664,17 +659,7 @@ export default function AdminPage() {
     setChecked(true)
   }, [])
 
-  function handleLogin(t: string) {
-    setToken(t)
-  }
-
-  function handleLogout() {
-    localStorage.removeItem("rmp_admin_token")
-    setToken(null)
-  }
-
   if (!checked) return null
-
-  if (!token) return <LoginScreen onLogin={handleLogin} />
-  return <Dashboard token={token} onLogout={handleLogout} />
+  if (!token) return <LoginScreen onLogin={(t) => setToken(t)} />
+  return <Dashboard token={token} onLogout={() => { localStorage.removeItem("rmp_admin_token"); setToken(null) }} />
 }
